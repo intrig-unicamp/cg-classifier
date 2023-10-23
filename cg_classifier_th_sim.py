@@ -17,7 +17,6 @@
 #!/bin/bash
 
 from utils import ip2long
-import matplotlib.pyplot as plt
 from zlib import crc32
 import ipaddress
 import re
@@ -25,8 +24,8 @@ import re
 import numpy as np
 import pandas as pd
 
-CG_IPG_TH_DN = 4600 
-CG_IPG_TH_UP = 50000 
+CG_IPG_TH_DN = 4600
+CG_IPG_TH_UP = 50000
 
 MAC_SRC_1 = 124230040217970
 MAC_SRC_2 = 57344564322886
@@ -35,14 +34,14 @@ MAC_DST_2 = 18121622349927
 
 IPG_MIN_DN = 0
 IPG_MAX_DN = 4600
-PS_MIN_DN = 100 
+PS_MIN_DN = 100
 PS_MAX_DN = 1500
 PKTS_MIN_DN = 200
 PKTS_MAX_DN = 16000
 
 IPG_MIN_UP = 401
 IPG_MAX_UP = 50000
-PS_MIN_UP = 60 
+PS_MIN_UP = 60
 PS_MAX_UP = 650
 PKTS_MIN_UP = 20
 PKTS_MAX_UP = 1800
@@ -64,7 +63,6 @@ class CG_Classifier:
         self.non_cg_count_true = 0
         self.m = memory
         self.flow_tables = np.zeros((1, memory), dtype=(np.int64, 9))
-        self.flow_tables_2 = np.zeros((1, memory), dtype=(np.int64, 2))
         self.sec_counts = 0
 
         self.time_duration = 0
@@ -78,8 +76,7 @@ class CG_Classifier:
 
                 ipSrc     = fields[2]
                 ipDst     = fields[3]
-                dtls_len  = fields[9]
-               
+
                 if self.validate_ip_address(ipSrc) == False or self.validate_ip_address(ipDst) == False:
                     continue
 
@@ -91,11 +88,6 @@ class CG_Classifier:
                 ts_c = float(fields[10])*1000000
                 ts_c = int(ts_c)
 
-                if dtls_len != '':
-                    dtls_len = int(dtls_len)
-                else:
-                    dtls_len = 0 
-
                 packet_size = fields[7]
 
                 if self.isMacValid(fields[0]) == False or self.isMacValid(fields[1]) == False:
@@ -103,28 +95,28 @@ class CG_Classifier:
 
                 mac_s = self.macToInt(fields[0])
                 mac_d = self.macToInt(fields[1])
-                
-                self.cloudGamingClassifier(flow_id, flow_id_ref, ts_c, packet_size, window_size, weighting_decrease, 
-                                           mac_s, mac_d, cg, dtls_len)
+
+                self.cloudGamingClassifier(flow_id, flow_id_ref, ts_c, packet_size, window_size, weighting_decrease,
+                                           mac_s, mac_d, cg)
 
     def flowIdHash(self, flowId, stage):
         return (hashA[stage] * flowId + hashB[stage]) % self.m
-    
+
     def isMacValid(self, mac):
         res = re.match('^((?:(?:[0-9a-f]{2}):){5}[0-9a-f]{2})$', mac.lower())
         if res is None:
             return False
         return True
-    
+
     def macToInt(self, mac):
         res = re.match('^((?:(?:[0-9a-f]{2}):){5}[0-9a-f]{2})$', mac.lower())
         if res is None:
             raise ValueError('invalid mac address')
         return int(res.group(0).replace(':', ''), 16)
-    
+
     def isIPv4(self, s):
         try: return str(int(s)) == s and 0 <= int(s) <= 255
-        except: return False  
+        except: return False
 
     def validate_ip_address(self, ip_string):
         try:
@@ -132,7 +124,7 @@ class CG_Classifier:
             return True
         except ValueError:
             return False
-        
+
     def ip2IntCovertor(self, ipSrc, ipDst):
         if ipSrc.count(".") == 3 and all(self.isIPv4(i) for i in ipSrc.split(".")):
             ipsource  = ip2long(ipSrc)
@@ -148,7 +140,7 @@ class CG_Classifier:
         s1 = 'aaa'
         flowId = str(flowId) + s1
         return ((crc32(flowId) % (1<<32)) % self.m)
-    
+
     def getPrcntDiff(self, uplink_val, downlink_val):
         if uplink_val == downlink_val:
             return 0
@@ -157,33 +149,15 @@ class CG_Classifier:
         except ZeroDivisionError:
             return 0
 
-    def cloudGamingClassifier(self, flow_id, flow_id_ref, ts_c, packet_size, window_size, weighting_decrease, mac_s, mac_d, cg, dtls_len):
-        # Convert in micro-seconds 
+    def cloudGamingClassifier(self, flow_id, flow_id_ref, ts_c, packet_size, window_size, weighting_decrease, mac_s, mac_d, cg):
+        # Convert in micro-seconds
         window_size = int(window_size) * 1000000
 
         if self.time_duration == 0:
             self.time_duration = ts_c
 
-        ###############################################################################
-        # Non-CG traffic can be filtered based on udp ports   
-        # Filter the Quic (port 443) and RDP (port 3389) based traffic (non-CG traffic)
-        ###############################################################################
-        # if udp_src == 443 or udp_src == 3389 or udp_dst == 443 or udp_dst == 3389:
-        #     if (ts_c - self.time_duration > window_size):
-        #         self.non_cg_count_true += 1 
-        #         self.non_cg_count += 1
-        #         self.time_duration = 0
-        #     return None
-
         table_slot = self.flowIdHash(flow_id, 10)
-        table_flow_id, ipg_w, ts_last, ps_w, pkt_n, table_flow_id_ref, _, _, dtls_length  = self.flow_tables[0][table_slot]
-
-        # store values comparing previous weighted IPG
-        if (ts_c - self.time_duration > window_size):
-            if self.sec_counts != 0:
-                ipg_w_last = self.flow_tables_2[0][table_slot][0]
-                self.flow_tables_2[0][table_slot][0] = ipg_w
-                self.flow_tables_2[0][table_slot][1] = ipg_w_last
+        table_flow_id, ipg_w, _, ts_last, ps_w, pkt_n, table_flow_id_ref, _, _  = self.flow_tables[0][table_slot]
 
         if (ts_c - self.time_duration > window_size):
             list_loc = []
@@ -191,13 +165,11 @@ class CG_Classifier:
                 count_up = 0
                 count_dn = 0
 
-                table_flow_id_t, ipg_w_t, _, ps_w_t, pkt_n_t, table_flow_id_ref_t, mac_s_t, mac_d_t, _   = self.flow_tables[0][i]
-                _, ipg_w_t_last = self.flow_tables_2[0][i]
+                table_flow_id_t, ipg_w_t, ipg_w_t_last, _, ps_w_t, pkt_n_t, table_flow_id_ref_t, mac_s_t, mac_d_t = self.flow_tables[0][i]
 
                 table_slot_ref_t = self.flowIdHash(table_flow_id_ref_t, 10)
-                table_flow_id_ref_t, ipg_w_ref_t, _, ps_w_ref_t, pkt_n_ref_t, _, _, _, _  = self.flow_tables[0][table_slot_ref_t]
-                _ , ipg_w_ref_t_last = self.flow_tables_2[0][table_slot_ref_t]
-                
+                table_flow_id_ref_t, ipg_w_ref_t, ipg_w_ref_t_last, _, ps_w_ref_t, pkt_n_ref_t, _, _, _  = self.flow_tables[0][table_slot_ref_t]
+
                 if table_flow_id_t == 0:
                     continue
 
@@ -228,10 +200,9 @@ class CG_Classifier:
                                 if PKTS_MIN_UP <= pkt_n_ref_t <= PKTS_MAX_UP:
                                     count_up = 1
                         else:
-                            if self.getChange(ipg_w_ref_t, ipg_w_ref_t_last) < 100000000:
-                                if PS_MIN_UP <= ps_w_ref_t <= PS_MAX_UP:
-                                    if PKTS_MIN_UP <= pkt_n_ref_t <= PKTS_MAX_UP:
-                                        count_up = 1
+                            if PS_MIN_UP <= ps_w_ref_t <= PS_MAX_UP:
+                                if PKTS_MIN_UP <= pkt_n_ref_t <= PKTS_MAX_UP:
+                                    count_up = 1
                 else:
                     if IPG_MIN_DN <= ipg_w_ref_t <= IPG_MAX_DN:
                         if self.sec_counts == 0:
@@ -250,10 +221,9 @@ class CG_Classifier:
                                 if PKTS_MIN_UP <= pkt_n_t <= PKTS_MAX_UP:
                                     count_dn = 1
                         else:
-                            if self.getChange(ipg_w_t, ipg_w_t_last) < 100000000:
-                                if PS_MIN_UP <= ps_w_t <= PS_MAX_UP:
-                                    if PKTS_MIN_UP <= pkt_n_t <= PKTS_MAX_UP:
-                                        count_dn = 1
+                            if PS_MIN_UP <= ps_w_t <= PS_MAX_UP:
+                                if PKTS_MIN_UP <= pkt_n_t <= PKTS_MAX_UP:
+                                    count_dn = 1
 
                 if count_up + count_dn == 2:
                     self.cg_count += 1
@@ -267,9 +237,14 @@ class CG_Classifier:
                 else:
                     self.non_cg_count_true += 1
 
-            self.time_duration = 0 
-            self.flow_tables *= 0
-            self.sec_counts = 1 
+                self.flow_tables[0][i][2] = self.flow_tables[0][i][1]
+                self.flow_tables[0][table_slot_ref_t][2] = self.flow_tables[0][table_slot_ref_t][1]
+
+                self.flow_tables[0][i][5] = 0
+                self.flow_tables[0][table_slot_ref_t][5] = 0
+
+            self.time_duration = 0
+            self.sec_counts = 1
 
             return None
 
@@ -283,11 +258,10 @@ class CG_Classifier:
             ps_w = (int(weighting_decrease) * ps_w + (100-int(weighting_decrease)) * int(packet_size))/100
 
             self.flow_tables[0][table_slot][1] = ipg_w
-            self.flow_tables[0][table_slot][2] = ts_c
-            self.flow_tables[0][table_slot][3] = ps_w
-            self.flow_tables[0][table_slot][4] = pkt_n + 1
-            self.flow_tables[0][table_slot][8] = dtls_length + dtls_len
-            
+            self.flow_tables[0][table_slot][3] = ts_c
+            self.flow_tables[0][table_slot][4] = ps_w
+            self.flow_tables[0][table_slot][5] = pkt_n + 1
+
             return None
 
         # Case II
@@ -295,21 +269,21 @@ class CG_Classifier:
 
             # Insert new entry
             if (mac_s == MAC_SRC_1 or mac_s == MAC_SRC_2 or mac_d == MAC_DST_1 or mac_d == MAC_DST_2):
-                self.flow_tables[0][table_slot] = flow_id, CG_IPG_TH_DN, ts_c, int(packet_size), 1, flow_id_ref, mac_s, mac_d, dtls_len
+                self.flow_tables[0][table_slot] = flow_id, CG_IPG_TH_DN, CG_IPG_TH_UP, ts_c, int(packet_size), 1, flow_id_ref, mac_s, mac_d
             else:
-                self.flow_tables[0][table_slot] = flow_id, CG_IPG_TH_UP, ts_c, int(packet_size), 1, flow_id_ref, mac_s, mac_d, dtls_len
+                self.flow_tables[0][table_slot] = flow_id, CG_IPG_TH_UP, CG_IPG_TH_UP, ts_c, int(packet_size), 1, flow_id_ref, mac_s, mac_d
             return None
 
         else:
             return None
-        
+
     def getChange(self, current, previous):
         if current == previous:
             return 0
         try:
             if previous == 0:
                 previous = 1
-        
+
             return (abs(current - previous) / previous) * 100.0
         except ZeroDivisionError:
             return 0
@@ -318,11 +292,10 @@ class CG_Classifier:
         true_prediction = (self.cg_count / self.cg_count_true) * 100
         wrong_prediction = 100 - true_prediction
 
-        return (true_prediction, wrong_prediction) 
-    
+        return (true_prediction, wrong_prediction)
+
     def getNonCgResult(self):
         true_prediction = (self.non_cg_count / self.non_cg_count_true) * 100
         wrong_prediction = 100 - true_prediction
 
-        return (true_prediction, wrong_prediction) 
-    
+        return (true_prediction, wrong_prediction)
