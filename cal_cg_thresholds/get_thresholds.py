@@ -35,14 +35,14 @@ def getCgFeaturesThresholds():
   for file in os.listdir():
     # Check whether file is in CSV format or not
     if file.endswith(".csv"):
-        
+
       cg_th = CG_Threshold_Cal(file, memorySlots)
 
       # list is in the below format
       # [IPG1st_quart, IPG3rd_quart, PacketSize1st_quart, PacketSize3rd_quart, No_packets, Dtls_length]
       list1, list2 = cg_th.getFeatureThresholds()
 
-      print (list1, list2) 
+      print (list1, list2)
 
   return None
 

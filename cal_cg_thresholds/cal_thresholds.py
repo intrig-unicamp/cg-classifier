@@ -57,18 +57,18 @@ class CG_Threshold_Cal:
                 dtls_length = fields[7]
                 if dtls_length == "":
                     dtls_length = 0
-                
+
                 packet_size = fields[5]
 
                 self.cloudGamingThresholdCal(flow_id, flow_id_ref, ts_c, packet_size, dtls_length)
 
     def flowIdHash(self, flowId, stage):
         return (hashA[stage] * flowId + hashB[stage]) % self.m
-    
+
     def isIPv4(self, s):
         try: return str(int(s)) == s and 0 <= int(s) <= 255
-        except: return False    
-    
+        except: return False
+
     def ip2IntCovertor(self, ipSrc, ipDst):
         if ipSrc.count(".") == 3 and all(self.isIPv4(i) for i in ipSrc.split(".")):
             ipsource  = ip2long(ipSrc)
@@ -90,7 +90,7 @@ class CG_Threshold_Cal:
             ##### Insert new entry #######
             self.flow_tables[table_slot] = [flow_id], _, [ts_c], [int(packet_size)], [1], [int(dtls_length)], [flow_id_ref]
             return None
-        
+
         elif table_flow_id[0] == flow_id and table_flow_id_ref[0] == flow_id_ref:
 
             ###### Update the entry ##########
@@ -101,19 +101,19 @@ class CG_Threshold_Cal:
             self.flow_tables[table_slot][3].append(int(packet_size))
             self.flow_tables[table_slot][4][0] = pkts[0] + 1
             self.flow_tables[table_slot][5][0] = dtls_length_last[0] + int(dtls_length)
-                        
+
             return None
 
         else:
             return None
-    
+
     def getFeatureThresholds(self):
 
         list_dir1 = []
         list_dir2 = []
 
         for i in range(0, self.m):
-            if len(self.flow_tables[i][0]) != 0: 
+            if len(self.flow_tables[i][0]) != 0:
                 for j in range(i + 1, self.m):
 
                     df_np = self.flow_tables[i][4]
@@ -125,7 +125,7 @@ class CG_Threshold_Cal:
                         # For one direction
                         df_ipg_dir1 = self.flow_tables[i][1]
                         df_ps_dir1 = self.flow_tables[i][3]
-                        
+
                         df_np_dir1 = self.flow_tables[i][4]
                         df_dtls_len_dir1 = self.flow_tables[i][5]
                         # df_ipg_dir1_m = sum(df_ipg_dir1) / len(df_ipg_dir1)
@@ -137,7 +137,7 @@ class CG_Threshold_Cal:
                         # For other direction
                         df_ipg_dir2 = self.flow_tables[j][1]
                         df_ps_dir2 = self.flow_tables[j][3]
-                        
+
                         df_np_dir2 = self.flow_tables[j][4]
                         df_dtls_len_dir2 = self.flow_tables[j][5]
                         # df_ipg_dir2_m = sum(df_ipg_dir2) / len(df_ipg_dir2)
