@@ -20,7 +20,7 @@ set -eu -o pipefail
 
 #############################################################################
 # Example to run this script
-# e.g., ./gen_test_csv.sh 1 ..cg_test_csv_dir_path 0 ..noncg_test_csv_dir_path
+# e.g., ./gen_test_csv.sh 1 ..cg_test_pcap_dir_path 0 ..noncg_test_pcap_dir_path
 ##############################################################################
 
 CG=$1 # 1 for cg traffic
