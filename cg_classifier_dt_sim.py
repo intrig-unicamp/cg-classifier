@@ -158,10 +158,10 @@ class CG_Classifier:
             for i in range(0, self.m):
                 cg_true = 0
 
-                table_flow_id_t, ipg_w_t, ipg_w_t_last, _, ps_w_t, pkt_n_t, table_flow_id_ref_t, mac_s_t, mac_d_t = self.flow_tables[0][i]
+                table_flow_id_t, ipg_w_t, _, _, ps_w_t, pkt_n_t, table_flow_id_ref_t, mac_s_t, mac_d_t = self.flow_tables[0][i]
 
                 table_slot_ref_t = self.flowIdHash(table_flow_id_ref_t, 10)
-                table_flow_id_ref_t, ipg_w_ref_t, ipg_w_ref_t_last, _, ps_w_ref_t, pkt_n_ref_t, _, _, _  = self.flow_tables[0][table_slot_ref_t]
+                table_flow_id_ref_t, ipg_w_ref_t, _, _, ps_w_ref_t, pkt_n_ref_t, _, _, _  = self.flow_tables[0][table_slot_ref_t]
 
                 if table_flow_id_t == 0:
                     continue
