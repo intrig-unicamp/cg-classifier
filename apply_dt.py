@@ -21,10 +21,10 @@ from sklearn import tree
 from sklearn.tree import DecisionTreeClassifier
 import matplotlib.pyplot as plt
 
-#############################
+############################
 # Example to run this script
 # e.g., python apply_dt.py
-#############################
+############################
 
 df = pandas.read_csv("gen_train_dataset/OUTPUT_DATASET/train_dataset.csv")
 
