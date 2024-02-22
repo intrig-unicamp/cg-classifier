@@ -23,7 +23,7 @@
 
 #include "include/parser.p4"
 #include "include/standard_headers.p4"
-#include "include/ingress_dt.p4"
+#include "include/dt.p4"
 
 control SwitchIngress(
     inout header_t hdr,
