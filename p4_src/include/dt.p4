@@ -23,16 +23,13 @@
 control IngressDtTable(inout header_t hdr,
         inout ingress_metadata_t meta) {
 
-    bit<16> ul_psw_code = 0;
-    bit<16> ul_ipgw_code = 0;
-    bit<16> dl_psw_code = 0;
-    bit<16> dl_ipgw_code = 0;
+    bit<16> sum_code = 0;
 
     /*************************************/
     /* uplink packet size moving average */
     /*************************************/
     action ul_psw(bit<16> code) {
-        ul_psw_code = code;
+        sum_code = sum_code + code;
     }
 
     table ul_psw_table {
@@ -51,7 +48,7 @@ control IngressDtTable(inout header_t hdr,
     /* uplink ipg moving average */
     /*************************************/
     action ul_ipgw(bit<16> code) {
-        ul_ipgw_code = code;
+        sum_code = sum_code + code;
     }
 
     table ul_ipgw_table {
@@ -70,12 +67,12 @@ control IngressDtTable(inout header_t hdr,
     /* downlink packet size moving average */
     /***************************************/
     action dl_psw(bit<16> code) {
-        dl_psw_code = code;
+        sum_code = sum_code + code;
     }
 
     table dl_psw_table {
         key = {
-            meta.hash_meta.psw_u  : exact;
+            meta.hash_meta.psw_d  : range;
         }
         actions = {
             dl_psw;
@@ -89,12 +86,12 @@ control IngressDtTable(inout header_t hdr,
     /* Downlink IPG moving average */
     /*******************************/
     action dl_ipgw(bit<16> code) {
-        dl_ipgw_code = code;
+        sum_code = sum_code + code;
     }
 
     table dl_ipgw_table {
         key = {
-            meta.hash_meta.ipgw_d  : exact;
+            meta.hash_meta.ipgw_d  : range;
         }
         actions = {
             dl_ipgw;
@@ -113,10 +110,7 @@ control IngressDtTable(inout header_t hdr,
 
     table is_cg_table {
         key = {
-            ul_psw_code  : exact;
-            ul_ipgw_code  : exact;
-            dl_ipgw_code  : exact;
-            dl_psw_code  : exact;
+            sum_code  : exact;
         }
         actions = {
             is_cg;
