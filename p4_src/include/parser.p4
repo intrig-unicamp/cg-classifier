@@ -77,6 +77,42 @@ parser SwitchIngressParser(
         out ingress_intrinsic_metadata_t ig_intr_md) {
 
    state start {
+        ig_md = {
+            TS = 0,
+            ipgwu = 0,
+            pswu = 0,
+            ipgwd = 0,
+            pswd = 0,
+            TSlastComp = 0,
+            is_cg = false,
+            ipgw_d = 0,
+            ipgw_u = 0,
+            psw_d = 0,
+            psw_u = 0,
+            cn_d = 0,
+            cn_u = 0,
+            cg_c1 = 0,
+            cg_c2 = 0,
+            cg_c3 = 0,
+            cg_c4 = 0,
+            cg_c5 = 0,
+            cg_c6 = 0,
+
+            srcAddrFlag = false,
+            dstAddrFlag = false,
+
+            is_ipv6 = false,
+            ipg = 0,
+            ipg_temp = 0,
+            is_reset = 0,
+            pkts_n = 0,
+            ipg_gain = 0,
+            psc_gain = 0,
+            temp = false,
+            psc = 0,
+            flow_index = 0,
+            flow_index_ref = 0
+        };
         packet.extract(ig_intr_md);
         transition select(ig_intr_md.resubmit_flag) {
             1 : parse_resubmit;
@@ -97,6 +133,7 @@ parser SwitchIngressParser(
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
             ETHERTYPE_IPV4: parse_ipv4;
+            ETHERTYPE_IPV6: parse_ipv6;
             default: accept;
         }
     }
@@ -104,6 +141,16 @@ parser SwitchIngressParser(
    state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol) {
+            IPPROTO_UDP  : parse_udp;
+            IPPROTO_TCP  : parse_tcp;
+            default      : accept;
+        }
+    }
+
+    state parse_ipv6 {
+        ig_md.is_ipv6 = true;
+        packet.extract(hdr.ipv6);
+        transition select(hdr.ipv6.nextHdr) {
             IPPROTO_UDP  : parse_udp;
             IPPROTO_TCP  : parse_tcp;
             default      : accept;

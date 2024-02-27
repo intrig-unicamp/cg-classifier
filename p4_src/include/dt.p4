@@ -21,9 +21,15 @@
 //=============================================================================
 
 control IngressDtTable(inout header_t hdr,
-        inout ingress_metadata_t meta) {
+        inout ingress_metadata_t meta,
+        inout ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md,
+        inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
 
     bit<16> sum_code = 0;
+
+    action drop(){
+        ig_intr_dprsr_md.drop_ctl = 0x1;
+    }
 
     /*************************************/
     /* uplink packet size moving average */
@@ -34,7 +40,7 @@ control IngressDtTable(inout header_t hdr,
 
     table ul_psw_table {
         key = {
-            meta.hash_meta.psw_u  : range;
+            meta.psw_u  : range;
         }
         actions = {
             ul_psw;
@@ -53,10 +59,29 @@ control IngressDtTable(inout header_t hdr,
 
     table ul_ipgw_table {
         key = {
-            meta.hash_meta.ipgw_u  : range;
+            meta.ipgw_u  : range;
         }
         actions = {
             ul_ipgw;
+            @defaultonly NoAction;
+        }
+        const default_action = NoAction;
+        size = 1024;
+    }
+
+    /*************************************/
+    /* uplink number of packets */
+    /*************************************/
+    action ul_pkts(bit<16> code) {
+        sum_code = sum_code + code;
+    }
+
+    table ul_pkts_table {
+        key = {
+            meta.pkts_n : range;
+        }
+        actions = {
+            ul_pkts;
             @defaultonly NoAction;
         }
         const default_action = NoAction;
@@ -72,7 +97,7 @@ control IngressDtTable(inout header_t hdr,
 
     table dl_psw_table {
         key = {
-            meta.hash_meta.psw_d  : range;
+            meta.psw_d  : range;
         }
         actions = {
             dl_psw;
@@ -91,7 +116,7 @@ control IngressDtTable(inout header_t hdr,
 
     table dl_ipgw_table {
         key = {
-            meta.hash_meta.ipgw_d  : range;
+            meta.ipgw_d  : range;
         }
         actions = {
             dl_ipgw;
@@ -105,18 +130,36 @@ control IngressDtTable(inout header_t hdr,
     /******* Detect CG ****************/
     /**********************************/
     action is_cg() {
-        meta.hash_meta.is_cg = true;
+        meta.is_cg = true;
     }
 
     table is_cg_table {
         key = {
             sum_code  : exact;
+            meta.is_reset : exact;
+            meta.pkts_n : range;
         }
         actions = {
             is_cg;
-            @defaultonly NoAction;
         }
-        const default_action = NoAction;
+        size = 1024;
+    }
+
+    action is_non_cg() {
+        ig_tm_md.ucast_egress_port = 129;
+    }
+
+    table is_non_cg_table {
+        key = {
+            meta.is_reset : exact;
+            meta.pkts_n : range;
+        }
+        actions = {
+            is_non_cg;
+            /* For testing only */
+            @defaultonly drop;
+        }
+        const default_action = drop;
         size = 1024;
     }
 
@@ -124,11 +167,18 @@ control IngressDtTable(inout header_t hdr,
         /***** Uplink *******/
         ul_psw_table.apply();
         ul_ipgw_table.apply();
+        ul_pkts_table.apply();
 
         /***** Downlink *****/
         dl_ipgw_table.apply();
         dl_psw_table.apply();
 
         is_cg_table.apply();
+
+        if (meta.is_cg == false) {
+            is_non_cg_table.apply();
+        } else {
+            ig_tm_md.ucast_egress_port = 128;
+        }
     }
 }

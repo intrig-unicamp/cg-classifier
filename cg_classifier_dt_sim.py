@@ -22,7 +22,6 @@ import ipaddress
 import re
 
 import numpy as np
-import pandas as pd
 
 CG_IPG_TH_DN = 4600
 CG_IPG_TH_UP = 50000
@@ -248,6 +247,8 @@ class CG_Classifier:
                 self.flow_tables[0][i][2] = self.flow_tables[0][i][1]
                 self.flow_tables[0][table_slot_ref_t][2] = self.flow_tables[0][table_slot_ref_t][1]
 
+                # print (self.flow_tables[0][i][5], self.flow_tables[0][table_slot_ref_t][5])
+
                 self.flow_tables[0][i][5] = 0
                 self.flow_tables[0][table_slot_ref_t][5] = 0
 
@@ -285,12 +286,15 @@ class CG_Classifier:
             return None
 
     def getCgResult(self):
+        print (self.cg_count_true)
         true_prediction = (self.cg_count / self.cg_count_true) * 100
         wrong_prediction = 100 - true_prediction
 
         return (true_prediction, wrong_prediction)
 
     def getNonCgResult(self):
+        print (self.cg_count_true)
+        print (self.non_cg_count_true)
         true_prediction = (self.non_cg_count / self.non_cg_count_true) * 100
         wrong_prediction = 100 - true_prediction
 

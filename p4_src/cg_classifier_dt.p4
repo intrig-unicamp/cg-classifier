@@ -41,64 +41,125 @@ control SwitchIngress(
     Register <bit<16>, _> (32w16384)  rPSwD;
 
     Register <bit<32>, _> (32w16384)  rTSlast;
-    Register <bit<32>, _> (32w16384)  rTStart;
 
-    /************ Low Pass Filter *********************/
-    Lpf<bit<16>, _> (32w16384) lpfIPGwU;
-    Lpf<bit<16>, _> (32w16384) lpfPSwU;
-    Lpf<bit<16>, _> (32w16384) lpfIPGwD;
-    Lpf<bit<16>, _> (32w16384) lpfPSwD;
+    Register <bit<32>, _> (32w16384)  rTWindow;
+    Register <bit<16>, _> (32w16384)  rNpkts;
+
+    /*********** Math Unit Functions ******************/
+    MathUnit<bit<16>>(MathOp_t.MUL, 1, 32) right_shift;
 
     /**********  Calculate Register Index ****************/
-    Hash<rSize>(HashAlgorithm_t.CRC32) hTableIndex_1;
-    Hash<rSize>(HashAlgorithm_t.CRC32) hTableIndex_2;
-    bit<14>  flow_index;
-    bit<14>  flow_index_ref;
-    bit<16>  ipg;
-    bit<16>  psc;
+    Hash<rSize>(HashAlgorithm_t.CRC32) hTableIndex_ipv4_1;
+    Hash<rSize>(HashAlgorithm_t.CRC32) hTableIndex_ipv4_2;
+    Hash<rSize>(HashAlgorithm_t.CRC32) hTableIndex_ipv6_1;
+    Hash<rSize>(HashAlgorithm_t.CRC32) hTableIndex_ipv6_2;
 
     IngressDtTable() ingress_dt_table;
 
-    action computeRegIndex_1() {
-        flow_index = hTableIndex_1.get({hdr.ipv4.srcAddr, hdr.ipv4.srcAddr, hdr.ipv4.dstAddr});
+    action computeRegIndex_ipv4_1() {
+        meta.flow_index = hTableIndex_ipv4_1.get({hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, hdr.ipv4.srcAddr, HASH_IN});
     }
 
-    action computeRegIndex_2() {
-        flow_index_ref = hTableIndex_2.get({hdr.ipv4.dstAddr, hdr.ipv4.srcAddr, hdr.ipv4.dstAddr});
+    action computeRegIndex_ipv4_2() {
+        meta.flow_index_ref = hTableIndex_ipv4_2.get({hdr.ipv4.dstAddr, hdr.ipv4.dstAddr, hdr.ipv4.srcAddr, HASH_IN});
+    }
+
+    action computeRegIndex_ipv6_1() {
+        meta.flow_index = hTableIndex_ipv6_1.get({hdr.ipv6.srcAddr, hdr.ipv6.dstAddr, hdr.ipv6.srcAddr, HASH_IN});
+    }
+
+    action computeRegIndex_ipv6_2() {
+        meta.flow_index_ref = hTableIndex_ipv6_2.get({hdr.ipv6.dstAddr, hdr.ipv6.dstAddr, hdr.ipv6.srcAddr, HASH_IN});
     }
 
     RegisterAction<bit<16>, rSize, bit<16>>(rIPGwU) rIPGwU_action = {
             void apply(inout bit<16> value, out bit<16> readvalue){
-                if (meta.hash_meta.ipgwu != 0) {
-                    value =  meta.hash_meta.ipgwu;
-                }
                 readvalue = value;
+                if (value > meta.ipg) {
+                    value = value - right_shift.execute(value);
+                } else {
+                    value = value + meta.ipg_gain;
+                }
         }
     };
 
     RegisterAction<bit<16>, rSize, bit<16>>(rPSwU) rPSwU_action = {
             void apply(inout bit<16> value, out bit<16> readvalue){
-                if (meta.hash_meta.pswu != 0) {
-                    value = meta.hash_meta.pswu;
-                }
                 readvalue = value;
+                if (value > meta.psc) {
+                    value = value - right_shift.execute(value);
+                } else {
+                    value = value + meta.psc_gain;
+                }
         }
     };
 
     RegisterAction<bit<16>, rSize, bit<16>>(rIPGwD) rIPGwD_action = {
             void apply(inout bit<16> value, out bit<16> readvalue){
-                if (meta.hash_meta.ipgwd != 0) {
-                    value =  meta.hash_meta.ipgwd;
-                }
                 readvalue = value;
+                if (value > meta.ipg) {
+                    value = value - right_shift.execute(value);
+                } else {
+                    value = value + meta.ipg_gain;
+                }
         }
     };
 
     RegisterAction<bit<16>, rSize, bit<16>>(rPSwD) rPSwD_action = {
             void apply(inout bit<16> value, out bit<16> readvalue){
-                if (meta.hash_meta.pswd != 0) {
-                    value =  meta.hash_meta.pswd;
+                readvalue = value;
+                if (value > meta.psc) {
+                    value = value - right_shift.execute(value);
+                } else {
+                    value = value + meta.psc_gain;
                 }
+        }
+    };
+
+    RegisterAction<bit<16>, rSize, bit<16>>(rIPGwU) rIPGwU_1_action = {
+            void apply(inout bit<16> value, out bit<16> readvalue){
+                value = meta.ipg;
+        }
+    };
+
+    RegisterAction<bit<16>, rSize, bit<16>>(rPSwU) rPSwU_1_action = {
+            void apply(inout bit<16> value, out bit<16> readvalue){
+                value = meta.psc;
+        }
+    };
+
+    RegisterAction<bit<16>, rSize, bit<16>>(rIPGwD) rIPGwD_1_action = {
+            void apply(inout bit<16> value, out bit<16> readvalue){
+                value = meta.ipg;
+        }
+    };
+
+    RegisterAction<bit<16>, rSize, bit<16>>(rPSwD) rPSwD_1_action = {
+            void apply(inout bit<16> value, out bit<16> readvalue){
+                value = meta.psc;
+        }
+    };
+
+    RegisterAction<bit<16>, rSize, bit<16>>(rIPGwU) rIPGwU_2_action = {
+            void apply(inout bit<16> value, out bit<16> readvalue){
+                readvalue = value;
+        }
+    };
+
+    RegisterAction<bit<16>, rSize, bit<16>>(rPSwU) rPSwU_2_action = {
+            void apply(inout bit<16> value, out bit<16> readvalue){
+                readvalue = value;
+        }
+    };
+
+    RegisterAction<bit<16>, rSize, bit<16>>(rIPGwD) rIPGwD_2_action = {
+            void apply(inout bit<16> value, out bit<16> readvalue){
+                readvalue = value;
+        }
+    };
+
+    RegisterAction<bit<16>, rSize, bit<16>>(rPSwD) rPSwD_2_action = {
+            void apply(inout bit<16> value, out bit<16> readvalue){
                 readvalue = value;
         }
     };
@@ -106,28 +167,52 @@ control SwitchIngress(
     /****** Update the last noted Timestamp **********************/
     RegisterAction<bit<32>, rSize, bit<32>>(rTSlast) rTSlast_action = {
         void apply(inout bit<32> value, out bit<32> readvalue){
-            readvalue = value;
-            value = meta.hash_meta.TS;
+            if (value == 0) {
+                readvalue = 0;
+            } else {
+                readvalue = value;
+            }
+            value = meta.TS;
         }
     };
 
-    RegisterAction<bit<32>, rSize, bool>(rTStart) rTStart_action = {
-        void apply(inout bit<32> value, out bool readvalue){
-            readvalue = false;
-            if (value == 0) {
-                value = meta.hash_meta.TS;
+    RegisterAction<bit<32>, rSize, bit<2>>(rTWindow) rTWindow_action = {
+        void apply(inout bit<32> value, out bit<2> readvalue){
+            readvalue = 0;
+            if (meta.TSlastComp == 0) {
+                value = meta.TS;
             } else {
-                if ((meta.hash_meta.TS - value) > 0x3B9ACA00) {
-                    value = meta.hash_meta.TS;
-                    readvalue = true;
+                if (meta.TS - value > 960000) {
+                    value = meta.TS;
+                    readvalue = 1;
                 }
+            }
+        }
+    };
+
+    RegisterAction<bit<16>, rSize, bit<16>>(rNpkts) rNpkts_action = {
+        void apply(inout bit<16> value, out bit<16> readvalue){
+            readvalue = value;
+            if (meta.is_reset == 1) {
+                value = 0;
+            } else {
+                value = value + 1;
+            }
+        }
+    };
+
+    RegisterAction<bit<16>, rSize, bit<16>>(rNpkts) rNpkts_1_action = {
+        void apply(inout bit<16> value, out bit<16> readvalue){
+            readvalue = value;
+            if (meta.is_reset == 1) {
+                value = 0;
             }
         }
     };
 
     /***************** mac table ***************/
     action set_sflag() {
-        meta.hash_meta.srcAddrFlag = true;
+        meta.srcAddrFlag = true;
     }
 
     table macs_table {
@@ -141,7 +226,7 @@ control SwitchIngress(
     }
 
     action set_dflag() {
-        meta.hash_meta.dstAddrFlag = true;
+        meta.dstAddrFlag = true;
     }
 
     table macd_table {
@@ -155,82 +240,96 @@ control SwitchIngress(
     }
 
     action computeTSlast() {
-        meta.hash_meta.TSlastComp  =  rTSlast_action.execute(flow_index);
-    }
-
-    action drop(){
-        ig_intr_dprsr_md.drop_ctl = 0x1;
-    }
-
-    action set_psc(){
-        psc = hdr.ipv4.totalLen + ETHERNET_HDR_FCS_SIZE;
+        meta.TSlastComp  =  rTSlast_action.execute(meta.flow_index);
     }
 
     action set_ipg(){
-        ipg = (bit<16>) (meta.hash_meta.TS - meta.hash_meta.TSlastComp);
+        meta.ipg_temp = (bit<32>) (meta.TS - meta.TSlastComp);
+    }
+
+    action rs_ipg(){
+        meta.ipg_gain = (bit<16>) (meta.ipg[15:4]);
+    }
+
+    action set_psc_ipv4(){
+        meta.psc = hdr.ipv4.totalLen + ETHERNET_HDR_FCS_SIZE;
+    }
+
+    action set_psc_ipv6(){
+        meta.psc = hdr.ipv6.payloadLen + ETHERNET_HDR_FCS_SIZE + L3_L4_HDR_FCS_SIZE;
+    }
+
+    action rs_ps(){
+        meta.psc_gain = (bit<16>) (meta.psc[15:4]);
     }
 
     /*********************** Apply ************************/
     apply {
 
-    meta.hash_meta.TS = ig_intr_md.ingress_mac_tstamp[31:0];
-    computeRegIndex_1();
-    computeRegIndex_2();
-    computeTSlast();
-
-    set_ipg();
-    set_psc();
-
-    meta.hash_meta.srcAddrFlag = false;
-    meta.hash_meta.dstAddrFlag = false;
     macs_table.apply();
     macd_table.apply();
 
-    if (meta.hash_meta.srcAddrFlag || meta.hash_meta.dstAddrFlag) {
-
-        if (ipg == (bit<16>) meta.hash_meta.TS) {
-            ipg = IPG_TH_DL;
-        }
-
-        /********** Downlink ******************/
-        meta.hash_meta.ipgwd = lpfIPGwD.execute(ipg, flow_index);
-        meta.hash_meta.ipgw_d = rIPGwD_action.execute(flow_index);
-
-        meta.hash_meta.pswd = lpfPSwD.execute(psc, flow_index);
-        meta.hash_meta.psw_d = rPSwD_action.execute(flow_index);
-
-        meta.hash_meta.ipgwu = 0;
-        meta.hash_meta.ipgw_u = rIPGwU_action.execute(flow_index_ref);
-
-        meta.hash_meta.pswu = 0;
-        meta.hash_meta.psw_u = rPSwU_action.execute(flow_index_ref);
+    meta.TS = (bit<32>) ig_intr_md.ingress_mac_tstamp[39:10];
+    if (meta.is_ipv6) {
+        set_psc_ipv6();
+        computeRegIndex_ipv6_1();
+        computeRegIndex_ipv6_2();
     } else {
+        set_psc_ipv4();
+        computeRegIndex_ipv4_1();
+        computeRegIndex_ipv4_2();
+    }
+    computeTSlast();
+    set_ipg();
 
-        if (ipg == (bit<16>) meta.hash_meta.TS) {
-            ipg = IPG_TH_UL;
+    if (meta.ipg_temp > 65535) {
+       meta.ipg = 65535;
+    } else {
+       meta.ipg = (bit<16>) (meta.ipg_temp);
+    }
+    rs_ipg();
+    rs_ps();
+
+    if (meta.srcAddrFlag || meta.dstAddrFlag) {
+
+        if (meta.TSlastComp == 0) {
+            meta.ipg = IPG_TH_DL;
+            rIPGwD_1_action.execute(meta.flow_index);
+            rPSwD_1_action.execute(meta.flow_index);
+            rIPGwU_1_action.execute(meta.flow_index_ref);
+            rPSwU_1_action.execute(meta.flow_index_ref);
+        } else {
+            /********** Downlink ******************/
+            meta.ipgw_d = rIPGwD_action.execute(meta.flow_index);
+            meta.psw_d = rPSwD_action.execute(meta.flow_index);
+
+            meta.ipgw_u = rIPGwU_2_action.execute(meta.flow_index_ref);
+            meta.psw_u = rPSwU_2_action.execute(meta.flow_index_ref);
         }
+        meta.is_reset = rTWindow_action.execute(meta.flow_index_ref);
+        meta.pkts_n = rNpkts_1_action.execute(meta.flow_index_ref);
+    } else {
+        if (meta.TSlastComp == 0) {
+            meta.ipg = IPG_TH_UL;
+            rIPGwU_1_action.execute(meta.flow_index);
+            rPSwU_1_action.execute(meta.flow_index);
+            rIPGwD_1_action.execute(meta.flow_index_ref);
+            rPSwD_1_action.execute(meta.flow_index_ref);
+        } else {
 
-        /********** Uplink ******************/
-        meta.hash_meta.ipgwu = lpfIPGwU.execute(ipg, flow_index);
-        meta.hash_meta.ipgw_u = rIPGwU_action.execute(flow_index);
+            /********** Uplink ******************/
+            meta.ipgw_u = rIPGwU_action.execute(meta.flow_index);
+            meta.psw_u = rPSwU_action.execute(meta.flow_index);
 
-        meta.hash_meta.pswu = lpfPSwU.execute(psc, flow_index);
-        meta.hash_meta.psw_u = rPSwU_action.execute(flow_index);
-
-        meta.hash_meta.ipgwd = 0;
-        meta.hash_meta.ipgw_d = rIPGwD_action.execute(flow_index_ref);
-
-        meta.hash_meta.pswd = 0;
-        meta.hash_meta.psw_d = rPSwD_action.execute(flow_index_ref);
+            meta.ipgw_d = rIPGwD_2_action.execute(meta.flow_index_ref);
+            meta.psw_d = rPSwD_2_action.execute(meta.flow_index_ref);
+        }
+        meta.is_reset = rTWindow_action.execute(meta.flow_index);
+        meta.pkts_n = rNpkts_action.execute(meta.flow_index);
     }
 
-    meta.hash_meta.time_th = rTStart_action.execute(flow_index);
-
-    if (meta.hash_meta.time_th) {
-        ingress_dt_table.apply(hdr, meta);
-    } else {
-        /* For testing only */
-        drop();
+    if (meta.TSlastComp != 0) {
+        ingress_dt_table.apply(hdr, meta, ig_intr_dprsr_md, ig_tm_md);
     }
 
     }

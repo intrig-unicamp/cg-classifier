@@ -17,6 +17,7 @@
 const bit<16> ETHERTYPE_ARP  = 0x0806;
 const bit<16> ETHERTYPE_VLAN = 0x8100;
 const bit<16> ETHERTYPE_IPV4 = 0x0800;
+const bit<16> ETHERTYPE_IPV6 = 0x86dd;
 
 const bit<8>  IPPROTO_ICMP   = 0x01;
 const bit<8>  IPPROTO_IPv4   = 0x04;
@@ -39,8 +40,10 @@ const bit<16> UDP_PORT_VXLAN   = 4789;
 const bit<32> MAC_LEARN_RECEIVER = 1;
 const bit<32> ARP_LEARN_RECEIVER = 1025;
 
-const bit<16> IPG_TH_UL   = 4600;
-const bit<16> IPG_TH_DL   = 10000;
+const bit<16> IPG_TH_UL   = 10000;
+const bit<16> IPG_TH_DL   = 4600;
+
+const bit<16> HASH_IN = 4600;
 
 /**** pre-defined parameters for HH detection ***/
 const bit<16>  IPG_INIT  = 1600;  // for 5 Mbps HH threhsold
@@ -51,6 +54,7 @@ const  bit<5>  QID_LP    = 7;
 const  bit<5>  QID_HP    = 1;
 
 const bit<16> ETHERNET_HDR_FCS_SIZE = 18;   // In bytes
+const bit<16> L3_L4_HDR_FCS_SIZE = 40 + 8;  // In bytes
 
 typedef bit<14>rSize;  // size of register
 typedef bit<9> port_t;
