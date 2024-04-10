@@ -49,6 +49,17 @@ header ipv4_t {
     bit<32>   dstAddr;
 }
 
+header ipv6_t {
+    bit<4>        version;
+    bit<8>        trafficClass;
+    bit<20>       flowLabel;
+    bit<16>       payloadLen;
+    bit<8>        nextHdr;
+    bit<8>        hopLimit;
+    bit<128>      srcAddr;
+    bit<128>      dstAddr;
+}
+
 header tcp_t {
     bit<16> srcPort;
     bit<16> dstPort;
@@ -70,14 +81,13 @@ header udp_t {
 }
 
 /* Local metadata */
-struct hash_metadata_t {
+struct ingress_metadata_t {
     bit<32>  TS;
     bit<16>  ipgwu;
     bit<16>  pswu;
     bit<16>  ipgwd;
     bit<16>  pswd;
     bit<32>  TSlastComp;
-    bool     time_th;
     bool     is_cg;
 
     bit<16>  ipgw_d;
@@ -96,18 +106,26 @@ struct hash_metadata_t {
 
     bool srcAddrFlag;
     bool dstAddrFlag;
+
+    bool is_ipv6;
+    bit<16> ipg;
+    bit<32> ipg_temp;
+    bit<2> is_reset;
+    bit<16> pkts_n;
+    bit<16> ipg_gain;
+    bit<16> psc_gain;
+    bool temp;
+    bit<16> psc;
+    bit<14> flow_index;
+    bit<14> flow_index_ref;
 }
 
 struct header_t {
     ethernet_t   ethernet;
     ipv4_t       ipv4;
+    ipv6_t       ipv6;
     udp_t        udp;
     tcp_t        tcp;
-}
-
-
-struct ingress_metadata_t {
-    hash_metadata_t hash_meta;
 }
 
 struct egress_metadata_t {
