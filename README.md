@@ -1,4 +1,4 @@
-# Decision tree implementation in programmable data plane
+# Decision tree implementation in programmable data plane to classfiy clould gaming and other applications traffic
 
 A decision tree (DT) is a supervised learning algorithm used for classfication and regression. Nowadays, because of mostly encrypted traffic flowing in dataplane, 
 it might be difficult to classfy them using packet header information. Learning the traffic behaviour can allow us to accurately classify specfic flows among others.    
