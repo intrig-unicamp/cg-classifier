@@ -24,3 +24,7 @@ However, here we focus mainly on the cloud gaming (CG) traffic to classify among
 ```
 
 ## Getting started
+To generate training dataset, '''gen_train_csv.sh''' is used as follows:
+'''
+./gen_train_csv.sh 1 ..cg_train_data_path 0 ..non_cg_train_data_path
+'''
