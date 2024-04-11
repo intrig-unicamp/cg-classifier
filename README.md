@@ -67,4 +67,32 @@ The P4 code is tested with SDE 9.12.0. The P4 ```code cg_classifier_dt.p4``` is 
 #### CP
 Once the switch is ready, ```bfrt_dt.py``` can be used to push all the required entries based on the outcomes of DT. 
 
+#### TReX Traffic Generator
+In this project, TReX TG is used for testing and can be downloaded from here: <a href="https://trex-tgn.cisco.com/">TReX</a> 
+
+The following commands can be used to send traffic to the Tofino switch:
+
+```
+./t-rex-64 -i
+./trex-console
+```
+
+Required to enter to service mode for capturing traffic, then
+```
+portattr -a --prom on
+```
+
+For capturing traffic:
+
+```
+trex(service)>capture record start --rx 0 --limit 30000
+trex(service)>push -r --port 1 -f ../pcap/path --force
+trex(service)>capture record stop --id 1 -o ../output/path/out.pcap
+```
+
+
+
+
+
+
 
