@@ -26,7 +26,7 @@ However, here we focus mainly on the cloud gaming (CG) traffic to classify among
 ## Getting started
 
 ### Dataset and features used
-The cloud gaming dataset used in this project is taken from paper: <a href="https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10154417&casa_token=THUhgh5H01cAAAAA:8aV2n4G9SiYREKPPHuOJRFMmkK5Zf_NC1faiqMW3OP9fGGG6mx7QSTEjyeYRccToOsXSca6Ppy0&tag=1">Paper</a> , and can be downloaded from this link: <a href="https://cloud-gaming-traces.lhs.loria.fr/data.html">dataset</a> 
+The CG and non-CG dataset used in this project is taken from paper: <a href="https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10154417&casa_token=THUhgh5H01cAAAAA:8aV2n4G9SiYREKPPHuOJRFMmkK5Zf_NC1faiqMW3OP9fGGG6mx7QSTEjyeYRccToOsXSca6Ppy0&tag=1">Paper</a> , and can be downloaded from this link: <a href="https://cloud-gaming-traces.lhs.loria.fr/data.html">Dataset</a> 
 
 There are five features are used to apply decision tree and classify CG traffic:
 ```
@@ -51,10 +51,20 @@ To generate test dataset, the following command is used:
 ./gen_test_csv.sh 1 ..cg_test_pcap_dir_path 0 ..noncg_test_pcap_dir_path
 ```
 
-### Simultaor to analyze
+### Simulator to analyze CG classification 
+```
+python result_cg_dt_sim.py --windowsize 1 --weighting_decrease 95 --cg f --dir_path gen_test_dataset/OUTPUT_DATASET/NON_CG_TEST_CSV/
+python result_cg_dt_sim.py --windowsize 1 --weighting_decrease 95 --cg t --dir_path gen_test_dataset/OUTPUT_DATASET/CG_TEST_CSV/
+```
 
+Instead of DT, the threshold based approach can also be used using script ```results_cg_th_sim.py```
 
+### Tofino switch ASIC to analyze CG classification
 
+#### DP
+The P4 code is tested with SDE 9.12.0. The P4 ```code cg_classifier_dt.p4``` is required to compile and generate the binary to run on Tofino.
 
+#### CP
+Once the switch is ready, ```bfrt_dt.py``` can be used to push all the required entries based on the outcomes of DT. 
 
 
