@@ -24,8 +24,31 @@ However, here we focus mainly on the cloud gaming (CG) traffic to classify among
 ```
 
 ## Getting started
-To generate training dataset, ```gen_train_csv.sh``` is used as follows:
+
+### Dataset and features used
+The cloud gaming dataset used in this project is taken from paper: <a href="https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10154417&casa_token=THUhgh5H01cAAAAA:8aV2n4G9SiYREKPPHuOJRFMmkK5Zf_NC1faiqMW3OP9fGGG6mx7QSTEjyeYRccToOsXSca6Ppy0&tag=1">Efficient Identification of Cloud Gaming Traffic
+at the Edge</a> , and can be downloaded from this link: <a href="https://cloud-gaming-traces.lhs.loria.fr/data.html">here</a> 
+
+
+
+### Generate training and test datasets
+To generate training dataset and DT, the following commands are used:
 
 ```
 ./gen_train_csv.sh 1 ..cg_train_data_path 0 ..non_cg_train_data_path
+python apply_dt.py
 ```
+
+To generate test dataset, the following command is used:
+
+```
+./gen_test_csv.sh 1 ..cg_test_pcap_dir_path 0 ..noncg_test_pcap_dir_path
+```
+
+### Simultaor to analyze
+
+
+
+
+
+
