@@ -26,9 +26,16 @@ However, here we focus mainly on the cloud gaming (CG) traffic to classify among
 ## Getting started
 
 ### Dataset and features used
-The cloud gaming dataset used in this project is taken from paper: <a href="https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10154417&casa_token=THUhgh5H01cAAAAA:8aV2n4G9SiYREKPPHuOJRFMmkK5Zf_NC1faiqMW3OP9fGGG6mx7QSTEjyeYRccToOsXSca6Ppy0&tag=1">here</a> , and can be downloaded from this link: <a href="https://cloud-gaming-traces.lhs.loria.fr/data.html">here</a> 
+The cloud gaming dataset used in this project is taken from paper: <a href="https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10154417&casa_token=THUhgh5H01cAAAAA:8aV2n4G9SiYREKPPHuOJRFMmkK5Zf_NC1faiqMW3OP9fGGG6mx7QSTEjyeYRccToOsXSca6Ppy0&tag=1">Paper</a> , and can be downloaded from this link: <a href="https://cloud-gaming-traces.lhs.loria.fr/data.html">dataset</a> 
 
-
+There are five features are used to apply decision tree and classify CG traffic:
+```
+moving average of uplink packet size per time window
+moving average of uplink inter packet gap per time window
+number of packets per time window for uplink 
+moving average of downlink packet size per window
+moving average of downlink inter packet gap per window
+```
 
 ### Generate training and test datasets
 To generate training dataset and DT, the following commands are used:
