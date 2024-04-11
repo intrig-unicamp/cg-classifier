@@ -1,9 +1,9 @@
-# Decision tree implementation in programmable data plane to classfiy clould gaming and other applications traffic
+# Decision tree in programmable data plane to classify various applications traffic
 
-A decision tree (DT) is a supervised learning algorithm used for classfication and regression. Nowadays, because of mostly encrypted traffic flowing in dataplane, 
-it might be difficult to classfy them using packet header information. Learning the traffic behaviour can allow us to accurately classify specfic flows among others.    
-This project implements the decision tree algorithm in P4 and runs on the Tofino switch hardware. There are many applications which can be classfied,
-however, here we focus mainly on the cloud gaming (CG) traffic to classfiy among other non-cg flows.  
+A decision tree (DT) is a supervised learning algorithm used for classification and regression. Nowadays, because of mostly encrypted traffic flowing in dataplane, 
+it might be difficult to classify them using packet header information. Learning the traffic behavior can allow us to accurately classify specific flows among others.    
+This project implements the decision tree algorithm in P4 and runs on the Tofino switch hardware. There are many applications which can be classified,
+However, here we focus mainly on the cloud gaming (CG) traffic to classify among other non-cg flows.
 
 ## Repository structure
 
