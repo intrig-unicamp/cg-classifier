@@ -60,6 +60,7 @@ control SwitchIngress(
         meta.flow_index = hTableIndex_ipv4_1.get({hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, hdr.ipv4.srcAddr, HASH_IN});
     }
 
+    /* Required flow index also for other direction */
     action computeRegIndex_ipv4_2() {
         meta.flow_index_ref = hTableIndex_ipv4_2.get({hdr.ipv4.dstAddr, hdr.ipv4.dstAddr, hdr.ipv4.srcAddr, HASH_IN});
     }
@@ -68,6 +69,7 @@ control SwitchIngress(
         meta.flow_index = hTableIndex_ipv6_1.get({hdr.ipv6.srcAddr, hdr.ipv6.dstAddr, hdr.ipv6.srcAddr, HASH_IN});
     }
 
+    /* Required flow index also for other direction */
     action computeRegIndex_ipv6_2() {
         meta.flow_index_ref = hTableIndex_ipv6_2.get({hdr.ipv6.dstAddr, hdr.ipv6.dstAddr, hdr.ipv6.srcAddr, HASH_IN});
     }
@@ -266,6 +268,9 @@ control SwitchIngress(
     /*********************** Apply ************************/
     apply {
 
+    /* For testing only */
+    /* TODO(Suneet): this is used only for knowing uplink or downlink direction
+     * later it can be differentiate based on incoming ports */
     macs_table.apply();
     macd_table.apply();
 
@@ -303,6 +308,7 @@ control SwitchIngress(
             meta.ipgw_d = rIPGwD_action.execute(meta.flow_index);
             meta.psw_d = rPSwD_action.execute(meta.flow_index);
 
+            /* Required uplink parameters also for DT */
             meta.ipgw_u = rIPGwU_2_action.execute(meta.flow_index_ref);
             meta.psw_u = rPSwU_2_action.execute(meta.flow_index_ref);
         }
@@ -321,6 +327,7 @@ control SwitchIngress(
             meta.ipgw_u = rIPGwU_action.execute(meta.flow_index);
             meta.psw_u = rPSwU_action.execute(meta.flow_index);
 
+            /* Required downlink parameters also for DT */
             meta.ipgw_d = rIPGwD_2_action.execute(meta.flow_index_ref);
             meta.psw_d = rPSwD_2_action.execute(meta.flow_index_ref);
         }
@@ -331,7 +338,6 @@ control SwitchIngress(
     if (meta.TSlastComp != 0) {
         ingress_dt_table.apply(hdr, meta, ig_intr_dprsr_md, ig_tm_md);
     }
-
     }
     }
 

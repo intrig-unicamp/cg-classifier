@@ -225,6 +225,10 @@ for ul_psw in range(2, 4):
 # decay_time = gain_time
 # out_scale = 0
 
+
+# TODO(suneet): Currently in the existing code, we do not use lpf to calculate EWMA
+# because it might hard to fix the alpha value which can impact overall accurracy
+# it is required to invesitgate further on that.
 # for i in range(0, 16384):
 #     p4.SwitchIngress.lpfIPGwU.add(LPF_INDEX=i, LPF_SPEC_TYPE=spec_type,
 #             LPF_SPEC_GAIN_TIME_CONSTANT_NS=gain_time, LPF_SPEC_DECAY_TIME_CONSTANT_NS=decay_time)

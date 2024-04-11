@@ -146,6 +146,7 @@ control IngressDtTable(inout header_t hdr,
     }
 
     action is_non_cg() {
+        /* For testing only */
         ig_tm_md.ucast_egress_port = 129;
     }
 
@@ -178,6 +179,7 @@ control IngressDtTable(inout header_t hdr,
         if (meta.is_cg == false) {
             is_non_cg_table.apply();
         } else {
+            /* For testing only */
             ig_tm_md.ucast_egress_port = 128;
         }
     }
