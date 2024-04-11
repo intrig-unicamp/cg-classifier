@@ -28,7 +28,6 @@ import matplotlib.pyplot as plt
 
 df = pandas.read_csv("gen_train_dataset/OUTPUT_DATASET/train_dataset.csv")
 
-# features = ["UL_IPGw", "UL_PSw", "UL_Pkts_N", "DL_IPGw", "DL_IPGw_Dev", "DL_PSw", "DL_Pkts_N"]
 features = ["UL_IPGw", "UL_PSw", "UL_Pkts_N", "DL_IPGw", "DL_PSw", "DL_Pkts_N"]
 
 X = df[features]
