@@ -82,13 +82,14 @@ Required to enter to service mode for capturing traffic, then
 portattr -a --prom on
 ```
 
-For capturing traffic:
+For capturing and sending traffic:
 
 ```
 trex(service)>capture record start --rx 0 --limit 30000
-trex(service)>push -r --port 1 -f ../pcap/path --force
+trex(service)>push -r --port 1 --src-mac-pcap --dst-mac-pcap -f ../pcap/path --force
 trex(service)>capture record stop --id 1 -o ../output/path/out.pcap
 ```
+Note: Please make sure to use --src-mac-pcap and --dst-mac-pcap flags to push packets to the switch, which confirms to use the same mac addresses from pcap. 
 
 
 
